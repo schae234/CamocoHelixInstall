@@ -46,7 +46,7 @@ fi
 if [ ! -d $BASE/Camoco ]
 then
     # git lfs init --force --skip-smudge
-    git config credential.helper store
+    git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
     git clone https://github.com/$GH_USER/Camoco.git $BASE/Camoco
