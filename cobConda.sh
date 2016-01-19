@@ -2,11 +2,11 @@
 # Script to setup camoco in an anaconda environment
 # Written by Joe Jeffers
 # Email: jeffe174@umn.edu
-# Updated October 28, 2015
+# Updated January 20, 2015
 
 # Configurable variables
 export HOME=$HOME
-export NAME="cobBoxTest"
+export NAME="cobBox"
 export BASE="/project/csbio/jeffe174"
 export GH_USER="monprin"
 
@@ -26,34 +26,31 @@ export PATH=$BASE/.local/bin:$PATH
 #===================================================
 #----------------Install git lfs--------------------
 #===================================================
-if [ ! -e $BASE/.local/bin/git-lfs ]
-then
-    echo "Installing git-lfs for the large files in the repo"
-    cd $BASE
-    wget https://github.com/github/git-lfs/releases/download/v0.5.4/git-lfs-linux-amd64-0.5.4.tar.gz
-    tar xzf git-lfs-linux-amd64-0.5.4.tar.gz
-    rm -rf git-lfs-linux-amd64-0.5.4.tar.gz
-    cd git-lfs-0.5.4/
-    mv git-lfs $BASE/.local/bin/
-    cd $BASE
-    rm -rf git-lfs-0.5.4/
-    git lfs init
-fi
+echo "Installing git-lfs for the large files in the repo"
+cd $BASE
+wget https://github.com/github/git-lfs/releases/download/v1.1.0/git-lfs-linux-amd64-1.1.0.tar.gz
+tar xzf git-lfs-linux-amd64-1.1.0.tar.gz
+rm -rf git-lfs-linux-amd64-1.1.0.tar.gz
+cd git-lfs-1.1.0/
+rm -rf $BASE/.local/bin/git-lfs*
+mv git-lfs $BASE/.local/bin/
+cd $BASE
+rm -rf git-lfs*
+git lfs install
 
 #===================================================
 #--------------Get the Camoco Repo------------------
 #===================================================
 if [ ! -d $BASE/Camoco ]
 then
-    # git lfs init --force --skip-smudge
+    git lfs uninstall
     git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
     git clone https://github.com/$GH_USER/Camoco.git $BASE/Camoco
     # Username: schae234
     # Password: HelloGitLFS
-    # git lfs uninit
-    # git lfs init --force
+    git lfs install
 fi
 export PYTHONPATH=$PYTHONPATH:$BASE/Camoco
 
@@ -117,7 +114,8 @@ fi
 echo "Making the conda virtual environment named $NAME in $BASE/.conda"
 cd $BASE
 conda config --add envs_dirs $BASE/.conda
-conda create -y -n $NAME --no-update-deps python=3 anaconda setuptools pip distribute cython nose six pyyaml yaml pyparsing python-dateutil pytz numpy scipy pandas matplotlib numexpr patsy statsmodels pytables flask networkx ipython
+conda remove -y --name $NAME --all
+conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask networkx ipython
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia termcolor
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
 source activate $NAME
@@ -127,6 +125,7 @@ source activate $NAME
 #===================================================
 echo "Installing apsw into the conda environment"
 cd $BASE
+rm -rf apsw
 git clone https://github.com/rogerbinns/apsw.git
 cd apsw
 python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install
