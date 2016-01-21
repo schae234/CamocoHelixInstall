@@ -8,6 +8,7 @@
 export HOME=$HOME
 export NAME="cobBox"
 export BASE="/project/csbio/jeffe174"
+export SCRATCH_FOLDER="/export/scratch/jeffe174"
 export GH_USER="monprin"
 
 #===================================================
@@ -19,6 +20,7 @@ cd $BASE
 mkdir -p $BASE/.local/lib
 mkdir -p $BASE/.local/bin
 mkdir -p $BASE/.conda
+mkdir -p $SCRATCH_FOLDER/camoco
 module load soft/python/anaconda
 export LD_LIBRARY_PATH=$BASE/.local/lib:$LD_LIBRARY_PATH
 export PATH=$BASE/.local/bin:$PATH
@@ -43,6 +45,25 @@ git lfs install
 #===================================================
 if [ ! -d $BASE/Camoco ]
 then
+    echo -e '--- # YAML Camoco Configuration File' \\n\
+    'logging:'\\n\
+    '   log_level: verbose'\\n\
+    'options:'\\n\
+    '  alpha: 0.0001'\\n\
+    '  'basedir: $SCRATCH_FOLDER/camoco/\\n\
+    '  debug: true'\\n\
+    '  'testdir: $BASE/Camoco/tests/\\n\
+    'test:'\\n\
+    '  cob: NewRoot'\\n\
+    '  force:'\\n\
+    '    COB: true'\\n\
+    '    Ontology: true'\\n\
+    '    RefGen: true'\\n\
+    '  gene: GRMZM2G000014'\\n\
+    '  num: 50'\\n\
+    '  ontology: ZmIonome'\\n\
+    '  refgen: Zm5bFGS'\\n\
+    '  term: Fe57' > ~/.camoco.conf && \
     git lfs uninstall
     git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
