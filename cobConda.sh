@@ -39,6 +39,7 @@ mv git-lfs $BASE/.local/bin/
 cd $BASE
 rm -rf git-lfs*
 git lfs install
+git lfs uninstall
 
 #===================================================
 #--------------Get the Camoco Repo------------------
@@ -64,14 +65,12 @@ then
     '  ontology: ZmIonome'\\n\
     '  refgen: Zm5bFGS'\\n\
     '  term: Fe57' > ~/.camoco.conf && \
-    git lfs uninstall
     git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
     git clone https://github.com/$GH_USER/Camoco.git $BASE/Camoco
     # Username: schae234
     # Password: HelloGitLFS
-    git lfs install
 fi
 export PYTHONPATH=$PYTHONPATH:$BASE/Camoco
 
