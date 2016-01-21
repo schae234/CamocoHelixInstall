@@ -8,7 +8,7 @@
 export HOME=$HOME
 export NAME="cobBox"
 export BASE="/project/csbio/jeffe174"
-export SCRATCH_FOLDER="/export/scratch/jeffe174"
+export SCRATCH_FOLDER="/export/scratch/jeffe174/camoco"
 export GH_USER="monprin"
 
 #===================================================
@@ -20,7 +20,7 @@ cd $BASE
 mkdir -p $BASE/.local/lib
 mkdir -p $BASE/.local/bin
 mkdir -p $BASE/.conda
-mkdir -p $SCRATCH_FOLDER/camoco
+mkdir -p $SCRATCH_FOLDER
 module load soft/python/anaconda
 export LD_LIBRARY_PATH=$BASE/.local/lib:$LD_LIBRARY_PATH
 export PATH=$BASE/.local/bin:$PATH
@@ -50,7 +50,7 @@ then
     '   log_level: verbose'\\n\
     'options:'\\n\
     '  alpha: 0.0001'\\n\
-    '  'basedir: $SCRATCH_FOLDER/camoco/\\n\
+    '  'basedir: $SCRATCH_FOLDER\\n\
     '  debug: true'\\n\
     '  'testdir: $BASE/Camoco/tests/\\n\
     'test:'\\n\
