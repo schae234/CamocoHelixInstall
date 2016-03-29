@@ -5,11 +5,9 @@
 # Updated January 20, 2015
 
 # Configurable variables
-export HOME=$HOME
-export NAME="cobBox"
-export BASE="/project/csbio/jeffe174"
-export SCRATCH_FOLDER="/export/scratch/jeffe174/camoco"
-export GH_USER="monprin"
+export NAME="camoco"
+[ -z "$BASE" ] && { echo "Need to set the BASE env variable as the base camoco install dir"; exit 1; }
+[ -z "$GH_USER" ] && { echo "Need to set GH_USER env variable"; exit 1; }
 
 #===================================================
 #----------Setup the build Environment--------------
@@ -20,8 +18,6 @@ cd $BASE
 mkdir -p $BASE/.local/lib
 mkdir -p $BASE/.local/bin
 mkdir -p $BASE/.conda
-mkdir -p $SCRATCH_FOLDER
-module load soft/python/anaconda
 export LD_LIBRARY_PATH=$BASE/.local/lib:$LD_LIBRARY_PATH
 export PATH=$BASE/.local/bin:$PATH
 
@@ -46,25 +42,6 @@ git lfs uninstall
 #===================================================
 if [ ! -d $BASE/Camoco ]
 then
-    echo -e '--- # YAML Camoco Configuration File' \\n\
-    'logging:'\\n\
-    '   log_level: verbose'\\n\
-    'options:'\\n\
-    '  alpha: 0.0001'\\n\
-    '  'basedir: $SCRATCH_FOLDER\\n\
-    '  debug: true'\\n\
-    '  'testdir: $BASE/Camoco/tests/\\n\
-    'test:'\\n\
-    '  cob: NewRoot'\\n\
-    '  force:'\\n\
-    '    COB: true'\\n\
-    '    Ontology: true'\\n\
-    '    RefGen: true'\\n\
-    '  gene: GRMZM2G000014'\\n\
-    '  num: 50'\\n\
-    '  ontology: ZmIonome'\\n\
-    '  refgen: Zm5bFGS'\\n\
-    '  term: Fe57' > ~/.camoco.conf && \
     git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
@@ -140,6 +117,12 @@ conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia te
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
 source activate $NAME
 
+#==================================================
+#----------Take care of some pip packages ---------
+#==================================================
+pip install powerlaw
+pip install sklearn
+
 #===================================================
 #-----------------Install apsw----------------------
 #===================================================
@@ -155,23 +138,9 @@ rm -rf apsw
 #===================================================
 #------------Update the bashrc----------------------
 #===================================================
-echo "Updating your $HOME/.bashrc as needed"
-if ! grep -q "soft/python/anaconda" $HOME/.bashrc
-then
-    echo "module load soft/python/anaconda" >> $HOME/.bashrc
-fi
-if ! grep -q "$BASE/Camoco" $HOME/.bashrc
-then
-    echo "export PYTHONPATH=\$PYTHONPATH:$BASE/Camoco" >> $HOME/.bashrc
-fi
-if ! grep -q "LD_LIBRARY_PATH=$BASE/.local/lib" $HOME/.bashrc
-then
-    echo "export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
-fi
-if ! grep -q "PATH=$BASE/.local/bin" $HOME/.bashrc
-then
-    echo "export PATH=$BASE/.local/bin:\$PATH" >> $HOME/.bashrc
-fi
+echo "Update your $HOME/.bashrc:"
+echo "export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
+echo "export PATH=$BASE/.local/bin:\$PATH" >> $HOME/.bashrc
 
 #===================================================
 #-------------Use Instructions----------------------
