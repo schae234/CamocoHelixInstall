@@ -5,11 +5,10 @@
 # Updated January 20, 2015
 
 # Configurable variables
-export HOME=$HOME
-export NAME="cobBox"
-export BASE="/project/csbio/jeffe174"
-export SCRATCH_FOLDER="/export/scratch/jeffe174/camoco"
-export GH_USER="monprin"
+export NAME="camoco"
+[ -z "$BASE" ] && { echo "Need to set the BASE env variable as the base camoco install dir"; exit 1; }
+[ -z "$GH_USER" ] && { echo "Need to set GH_USER env variable"; exit 1; }
+
 
 #===================================================
 #----------Setup the build Environment--------------
@@ -20,10 +19,18 @@ cd $BASE
 mkdir -p $BASE/.local/lib
 mkdir -p $BASE/.local/bin
 mkdir -p $BASE/.conda
-mkdir -p $SCRATCH_FOLDER
-module load soft/python/anaconda
 export LD_LIBRARY_PATH=$BASE/.local/lib:$LD_LIBRARY_PATH
 export PATH=$BASE/.local/bin:$PATH
+
+#===================================================
+#----------------Install conda ---------------------
+#===================================================
+if ! hash foo 2>/dev/null ; then
+	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+	bash miniconda.sh -b $HOME/miniconda
+	export PATH="$HOME/miniconda/bin:$PATH"
+fi
+
 
 #===================================================
 #----------------Install git lfs--------------------
@@ -46,25 +53,6 @@ git lfs uninstall
 #===================================================
 if [ ! -d $BASE/Camoco ]
 then
-    echo -e '--- # YAML Camoco Configuration File' \\n\
-    'logging:'\\n\
-    '   log_level: verbose'\\n\
-    'options:'\\n\
-    '  alpha: 0.0001'\\n\
-    '  'basedir: $SCRATCH_FOLDER\\n\
-    '  debug: true'\\n\
-    '  'testdir: $BASE/Camoco/tests/\\n\
-    'test:'\\n\
-    '  cob: NewRoot'\\n\
-    '  force:'\\n\
-    '    COB: true'\\n\
-    '    Ontology: true'\\n\
-    '    RefGen: true'\\n\
-    '  gene: GRMZM2G000014'\\n\
-    '  num: 50'\\n\
-    '  ontology: ZmIonome'\\n\
-    '  refgen: Zm5bFGS'\\n\
-    '  term: Fe57' > ~/.camoco.conf && \
     git config --global credential.helper cache
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
@@ -135,10 +123,16 @@ echo "Making the conda virtual environment named $NAME in $BASE/.conda"
 cd $BASE
 conda config --add envs_dirs $BASE/.conda
 conda remove -y --name $NAME --all
-conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask networkx ipython
+conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask networkx ipython mpmath
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia termcolor
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
 source activate $NAME
+
+#==================================================
+#----------Take care of some pip packages ---------
+#==================================================
+pip install powerlaw
+pip install sklearn
 
 #===================================================
 #-----------------Install apsw----------------------
@@ -155,23 +149,9 @@ rm -rf apsw
 #===================================================
 #------------Update the bashrc----------------------
 #===================================================
-echo "Updating your $HOME/.bashrc as needed"
-if ! grep -q "soft/python/anaconda" $HOME/.bashrc
-then
-    echo "module load soft/python/anaconda" >> $HOME/.bashrc
-fi
-if ! grep -q "$BASE/Camoco" $HOME/.bashrc
-then
-    echo "export PYTHONPATH=\$PYTHONPATH:$BASE/Camoco" >> $HOME/.bashrc
-fi
-if ! grep -q "LD_LIBRARY_PATH=$BASE/.local/lib" $HOME/.bashrc
-then
-    echo "export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
-fi
-if ! grep -q "PATH=$BASE/.local/bin" $HOME/.bashrc
-then
-    echo "export PATH=$BASE/.local/bin:\$PATH" >> $HOME/.bashrc
-fi
+echo "Update your $HOME/.bashrc:"
+echo "export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
+echo "export PATH=$BASE/.local/bin:\$PATH" >> $HOME/.bashrc
 
 #===================================================
 #-------------Use Instructions----------------------
