@@ -5,53 +5,56 @@
 # Updated January 20, 2015
 
 
-function usage {
-cat << EOF
-Usage: \$bash ./cobConda
+function usage(){
+cat <<EOF
+    Usage: $0 [flags]
 
-Flags
------
--h | --help
-    print help message
--b | --base
-    Base installation directory for the anaconda virtual python environment
--g | --github-user
-    Optional github user to clone Camoco repo from (default: schae234)
-
+    Flags
+    -----
+    -h | --help
+        print help message
+    -b | --base
+        Base installation directory for camoco (default: ~/.camoco).
+    -g | --github-user
+        Optional github user to clone Camoco repo from (default: schae234)
 EOF
+exit 0
 }
 
 # Configurable variables
 GH_USER='schae234'
-BASE='~/.camoco/'
+BASE=~/.camoco/
 
-while [[ $# > 1 ]]
+while [[ $# > 0 ]]
 do
-    key="$1"
-    case $key in 
-        -h|--help)
-        usage;
-        exit 0;
-        shift
-        ;;
-        -b|--base)
-        BASE=$2
-        shift
-        ;;
-        -g|--github-user)
-        GH_USER=$2
-        shift
-        ;;
-        *)  
-            #unknown options
-        ;;
-    esac
+key="$1"
+case $key in 
+    -h|--help)
+    usage
     shift
+    ;;
+    -b|--base)
+    BASE=$2
+    shift
+    ;;
+    -g|--github-user)
+    GH_USER=$2
+    shift
+    ;;
+    *)  
+        #unknown options
+    ;;
+esac
+shift
 done
+
+echo $BASE $GH_USER
 
 export NAME="camoco"
 [ -z "$BASE" ] && { usage; echo "Error: Set the --base option."; exit 1; }
 [ -z "$GH_USER" ] && { usage; echo "Error: Set the --github-user option"; exit 1; }
+
+exit 0;
 
 #===================================================
 #----------Setup the build Environment--------------
