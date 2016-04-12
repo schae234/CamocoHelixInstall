@@ -23,6 +23,7 @@ EOF
 
 # Configurable variables
 GH_USER='schae234'
+BASE='~/.camoco/'
 
 while [[ $# > 1 ]]
 do
