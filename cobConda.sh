@@ -4,11 +4,53 @@
 # Email: jeffe174@umn.edu
 # Updated January 20, 2015
 
-# Configurable variables
-export NAME="camoco"
-[ -z "$BASE" ] && { echo "Need to set the BASE env variable as the base camoco install dir"; exit 1; }
-[ -z "$GH_USER" ] && { echo "Need to set GH_USER env variable"; exit 1; }
 
+function usage {
+cat << EOF
+Usage: \$bash ./cobConda
+
+Flags
+-----
+-h | --help
+    print help message
+-b | --base
+    Base installation directory for the anaconda virtual python environment
+-g | --github-user
+    Optional github user to clone Camoco repo from (default: schae234)
+
+EOF
+}
+
+# Configurable variables
+GH_USER='schae234'
+
+while [[ $# > 1 ]]
+do
+    key="$1"
+    case $key in 
+        -h|--help)
+        usage;
+        exit 0;
+        shift
+        ;;
+        -b|--base)
+        BASE=$2
+        shift
+        ;;
+        -g|--github-user)
+        GH_USER=$2
+        shift
+        ;;
+        *)  
+            #unknown options
+        ;;
+    esac
+    shift
+done
+
+export NAME="camoco"
+[ -z "$BASE" ] && { usage; echo "Error: Set the --base option."; exit 1; }
+[ -z "$GH_USER" ] && { usage; echo "Error: Set the --github-user option"; exit 1; }
 
 #===================================================
 #----------Setup the build Environment--------------
@@ -31,22 +73,23 @@ if ! hash conda 2>/dev/null ; then
 	rm -rf miniconda.sh
 fi
 
-
 #===================================================
 #----------------Install git lfs--------------------
 #===================================================
-echo "Installing git-lfs for the large files in the repo"
-cd $BASE
-wget https://github.com/github/git-lfs/releases/download/v1.1.0/git-lfs-linux-amd64-1.1.0.tar.gz
-tar xzf git-lfs-linux-amd64-1.1.0.tar.gz
-rm -rf git-lfs-linux-amd64-1.1.0.tar.gz
-cd git-lfs-1.1.0/
-rm -rf $BASE/.local/bin/git-lfs*
-mv git-lfs $BASE/.local/bin/
-cd $BASE
-rm -rf git-lfs*
-git lfs install
-git lfs uninstall
+if ! hash git-lfs 2>/dev/null ; then
+    echo "Installing git-lfs for the large files in the repo"
+    cd $BASE
+    wget https://github.com/github/git-lfs/releases/download/v1.1.0/git-lfs-linux-amd64-1.1.0.tar.gz
+    tar xzf git-lfs-linux-amd64-1.1.0.tar.gz
+    rm -rf git-lfs-linux-amd64-1.1.0.tar.gz
+    cd git-lfs-1.1.0/
+    rm -rf $BASE/.local/bin/git-lfs*
+    mv git-lfs $BASE/.local/bin/
+    cd $BASE
+    rm -rf git-lfs*
+    git lfs install
+    git lfs uninstall
+fi
 
 #===================================================
 #--------------Get the Camoco Repo------------------
@@ -57,8 +100,6 @@ then
     echo "Cloning the Camoco repo into $BASE"
     cd $BASE
     git clone https://github.com/$GH_USER/Camoco.git $BASE/Camoco
-    # Username: schae234
-    # Password: HelloGitLFS
 fi
 export PYTHONPATH=$PYTHONPATH:$BASE/Camoco
 
@@ -123,9 +164,19 @@ echo "Making the conda virtual environment named $NAME in $BASE/.conda"
 cd $BASE
 conda config --add envs_dirs $BASE/.conda
 conda remove -y --name $NAME --all
-conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask networkx ipython mpmath
+conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute \
+    cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy \
+    scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask \
+    networkx ipython mpmath
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia termcolor
 conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
+export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH
+export PATH=$BASE/.local/bin:\$PATH
+
+
+#===================================================
+#----------Activate the Conda Environment-----------
+#===================================================
 source activate $NAME
 
 #==================================================
@@ -145,6 +196,14 @@ cd apsw
 python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install
 cd $BASE
 rm -rf apsw
+
+#==================================================
+#-----------------Install Camoco-------------------
+#=================================================
+echo "Installing Camoco"
+cd $BASE
+python setup.py install
+
 
 #===================================================
 #------------Update the bashrc----------------------
