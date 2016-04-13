@@ -48,32 +48,29 @@ esac
 shift
 done
 
-echo $BASE $GH_USER
-
 export NAME="camoco"
 [ -z "$BASE" ] && { usage; echo "Error: Set the --base option."; exit 1; }
 [ -z "$GH_USER" ] && { usage; echo "Error: Set the --github-user option"; exit 1; }
-
-exit 0;
 
 #===================================================
 #----------Setup the build Environment--------------
 #===================================================
 echo "Setting up the build environment"
 source $HOME/.bashrc
+mkdir -p $BASE
 cd $BASE
-mkdir -p $BASE/.local/lib
-mkdir -p $BASE/.local/bin
-mkdir -p $BASE/.conda
-export LD_LIBRARY_PATH=$BASE/.local/lib:$LD_LIBRARY_PATH
-export PATH=$BASE/.local/bin:$PATH
+export LD_LIBRARY_PATH=$BASE/lib:$LD_LIBRARY_PATH
+export PATH=$BASE/bin:$PATH
 
 #===================================================
 #----------------Install conda ---------------------
 #===================================================
-if ! hash conda 2>/dev/null ; then
+# if ! hash conda 2>/dev/null
+if [ ! -e $BASE/bin/conda ]
+then
+    cd $BASE
 	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-	bash miniconda.sh -b -f -p $BASE/.local
+	bash miniconda.sh -b -f -p $BASE
 	rm -rf miniconda.sh
 fi
 
@@ -87,8 +84,8 @@ if ! hash git-lfs 2>/dev/null ; then
     tar xzf git-lfs-linux-amd64-1.1.0.tar.gz
     rm -rf git-lfs-linux-amd64-1.1.0.tar.gz
     cd git-lfs-1.1.0/
-    rm -rf $BASE/.local/bin/git-lfs*
-    mv git-lfs $BASE/.local/bin/
+    rm -rf $BASE/bin/git-lfs*
+    mv git-lfs $BASE/bin/
     cd $BASE
     rm -rf git-lfs*
     git lfs install
@@ -110,7 +107,7 @@ export PYTHONPATH=$PYTHONPATH:$BASE/Camoco
 #===================================================
 #-----Install libraries to Ensure Smoothness--------
 #===================================================
-if [ ! -e $BASE/.local/bin/icu-config ]
+if [ ! -e $BASE/bin/icu-config ]
 then
     echo "Installing a local version of the icu library"
     cd $BASE
@@ -119,13 +116,13 @@ then
     tar xzf icu_4.8.1.1.orig.tar.gz
     rm -rf icu_4.8.1.1.orig.tar.gz
     cd icu/source
-    ./configure --prefix=$BASE/.local
+    ./configure --prefix=$BASE
     make
     make install
     cd $BASE
     rm -rf icu/
 fi
-if [ ! -e $BASE/.local/lib/libqhull.so ]
+if [ ! -e $BASE/lib/libqhull.so ]
 then
     echo "Installing a local version of the qhull library"
     cd $BASE
@@ -135,9 +132,9 @@ then
     rm -rf qhull-2012.1-src.tgz
     cd qhull-2012.1
     make
-    mv bin/* $BASE/.local/bin/
-    mv lib/* $BASE/.local/lib
-    ln -s $BASE/.local/lib/libqhull.so $BASE/.local/lib/libqhull.so.5
+    mv bin/* $BASE/bin/
+    mv lib/* $BASE/lib/
+    ln -s $BASE/lib/libqhull.so $BASE/lib/libqhull.so.5
     cd $BASE
     rm -rf qhull-2012.1/
 fi
@@ -145,7 +142,7 @@ fi
 #===================================================
 #------------------Install mcl----------------------
 #===================================================
-if [ ! -e $BASE/.local/bin/mcl ]
+if [ ! -e $BASE/bin/mcl ]
 then
     echo "Installing mcl locally"
     cd $BASE
@@ -154,7 +151,7 @@ then
     tar xzvf mcl-latest.tar.gz
     rm -rf mcl-latest.tar.gz
     cd $(find . -name 'mcl-*' -type d | head -n 1)
-    ./configure --prefix=$BASE/.local
+    ./configure --prefix=$BASE
     make
     make install
     cd $BASE
@@ -164,19 +161,21 @@ fi
 #===================================================
 #----------Build the Conda Environment--------------
 #===================================================
-echo "Making the conda virtual environment named $NAME in $BASE/.conda"
-cd $BASE
-conda config --add envs_dirs $BASE/.conda
-conda remove -y --name $NAME --all
-conda create -y -n $NAME --no-update-deps python=3.4 anaconda setuptools pip distribute \
-    cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy \
-    scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask \
-    networkx ipython mpmath
-conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia termcolor
-conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
-export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH
-export PATH=$BASE/.local/bin:\$PATH
-
+if [ ! -d $BASE/.conda ]
+then
+    echo "Making the conda virtual environment named $NAME in $BASE/.conda"
+    cd $BASE
+    bin/conda config --add envs_dirs $BASE/.conda
+    bin/conda remove -y --name $NAME --all
+    bin/conda create -y -n $NAME --no-update-deps python=3.4 setuptools pip distribute \
+        cython==0.22.1 nose six pyyaml yaml pyparsing python-dateutil pytz numpy \
+        scipy pandas matplotlib==1.4.3 numexpr patsy statsmodels pytables flask \
+        networkx ipython mpmath
+    bin/conda remove -y -n $NAME libgfortran --force
+    bin/conda install -y -n $NAME libgcc --force
+    bin/conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/omnia termcolor
+    bin/conda install --no-update-deps -y -n $NAME -c http://conda.anaconda.org/cpcloud ipdb
+fi
 
 #===================================================
 #----------Activate the Conda Environment-----------
@@ -186,6 +185,8 @@ source activate $NAME
 #==================================================
 #----------Take care of some pip packages ---------
 #==================================================
+easy_install -U pip
+pip install pip --upgrade
 pip install powerlaw
 pip install sklearn
 
@@ -208,13 +209,12 @@ echo "Installing Camoco"
 cd $BASE
 python setup.py install
 
-
 #===================================================
 #------------Update the bashrc----------------------
 #===================================================
 echo "Update your $HOME/.bashrc:"
-echo "export LD_LIBRARY_PATH=$BASE/.local/lib:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
-echo "export PATH=$BASE/.local/bin:\$PATH" >> $HOME/.bashrc
+echo "export LD_LIBRARY_PATH=$BASE/lib:\$LD_LIBRARY_PATH"
+echo "export PATH=$BASE/bin:\$PATH"
 
 #===================================================
 #-------------Use Instructions----------------------
